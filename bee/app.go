@@ -14,12 +14,13 @@ import (
 
 // MagicApp 魔术师
 type MagicApp struct {
-	Addr        string // 运行地址端口
-	ConfPath    string // 配置文件路径
-	ConfName    string // 配置文件名
-	IsDefault   bool   // 是否使用默认路由引擎
-	RunMode     string // 运行模式
-	RegRouteFun func(r *gin.Engine)
+	Addr        string              // 运行地址端口
+	ConfPath    string              // 配置文件路径
+	ConfName    string              // 配置文件名
+	IsDefault   bool                // 是否使用默认路由引擎
+	RunMode     string              // 运行模式
+	RegRouteFun func(r *gin.Engine) // 路由注册
+	ExitAfter   func()              // 程序结束后的操作
 	router      *gin.Engine
 	isInit      bool // 是否初始化过
 }
@@ -48,22 +49,31 @@ func (m *MagicApp) Run() {
 		fmt.Printf("[%s] server start err: 未初始化数据\n", time.Now().Format(time.DateTime))
 		return
 	}
+
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
 	srv := &http.Server{Addr: fmt.Sprintf("%s", m.Addr), Handler: m.router}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fmt.Printf("[%s] server listen err: %s\n", time.Now().Format(time.DateTime), err)
 		}
 	}()
+
 	<-ctx.Done()
 	stop()
+
 	fmt.Println("shutting down gracefully, press Ctrl+C again to force")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
 		fmt.Println("Server forced to shutdown: ", err)
 	}
+
+	if m.ExitAfter != nil {
+		m.ExitAfter()
+	}
+
 	fmt.Println("Server exiting")
 }
 

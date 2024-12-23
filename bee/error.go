@@ -1,5 +1,7 @@
 package bee
 
+import "github.com/dhlanshan/go-saillibs/internal/tools"
+
 const (
 	OK        = 200  // 成功
 	SystemErr = 1000 // 系统错误
@@ -18,12 +20,8 @@ func GetCodeMsg(code int) string {
 		ArgErr:    "参数错误",
 		ApiErr:    "接口错误",
 	}
-	msg := "未知错误类型"
-	if v, ok := codeMap[code]; ok {
-		msg = v
-	}
 
-	return msg
+	return tools.GetMapDefault(codeMap, code, "未知错误类型")
 }
 
 type Error struct {
