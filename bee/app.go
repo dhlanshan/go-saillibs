@@ -14,15 +14,16 @@ import (
 
 // MagicApp 魔术师
 type MagicApp struct {
-	Addr        string              // 运行地址端口
-	ConfPath    string              // 配置文件路径
-	ConfName    string              // 配置文件名
-	IsDefault   bool                // 是否使用默认路由引擎
-	RunMode     string              // 运行模式
-	RegRouteFun func(r *gin.Engine) // 路由注册
-	ExitAfter   func()              // 程序结束后的操作
-	router      *gin.Engine
-	isInit      bool // 是否初始化过
+	Addr           string              // 运行地址端口
+	ConfPath       string              // 配置文件路径
+	ConfName       string              // 配置文件名
+	ConfHotLoading bool                // 配置启用热加载
+	IsDefault      bool                // 是否使用默认路由引擎
+	RunMode        string              // 运行模式
+	RegRouteFun    func(r *gin.Engine) // 路由注册
+	ExitAfter      func()              // 程序结束后的操作
+	router         *gin.Engine
+	isInit         bool // 是否初始化过
 }
 
 // Init 初始化
@@ -102,6 +103,10 @@ func (m *MagicApp) initConfig() {
 		panic("初始化配置失败")
 	}
 	fmt.Printf("[%s] 初始化配置...ok\n", time.Now().Format(time.DateTime))
+	if m.ConfHotLoading {
+		//viper.OnConfigChange(func(e fsnotify.Event) {})  // 配置变化时的回调
+		viper.WatchConfig()
+	}
 }
 
 // InitLog 初始化日志
