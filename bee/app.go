@@ -22,7 +22,7 @@ type MagicApp struct {
 	RunMode        string              // 运行模式
 	RegRouteFun    func(r *gin.Engine) // 路由注册
 	ExitAfter      func()              // 程序结束后的操作
-	router         *gin.Engine
+	Router         *gin.Engine
 	isInit         bool // 是否初始化过
 }
 
@@ -38,7 +38,7 @@ func (m *MagicApp) Init() {
 	m.testRoute()
 	// 路由注册
 	if m.RegRouteFun != nil {
-		m.RegRouteFun(m.router)
+		m.RegRouteFun(m.Router)
 	}
 	// 初始化完毕
 	m.isInit = true
@@ -54,7 +54,7 @@ func (m *MagicApp) Run() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	srv := &http.Server{Addr: fmt.Sprintf("%s", m.Addr), Handler: m.router}
+	srv := &http.Server{Addr: fmt.Sprintf("%s", m.Addr), Handler: m.Router}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fmt.Printf("[%s] server listen err: %s\n", time.Now().Format(time.DateTime), err)
@@ -85,9 +85,9 @@ func (m *MagicApp) initRouter() {
 	}
 	gin.SetMode(m.RunMode)
 	if m.IsDefault {
-		m.router = gin.Default()
+		m.Router = gin.Default()
 	} else {
-		m.router = gin.New()
+		m.Router = gin.New()
 	}
 }
 
@@ -118,7 +118,7 @@ func (m *MagicApp) initLog() {
 
 // testRoute 心跳检测
 func (m *MagicApp) testRoute() {
-	m.router.GET("/ping", func(c *gin.Context) {
+	m.Router.GET("/ping", func(c *gin.Context) {
 		c.String(http.StatusOK, "success! This service is normal.")
 	})
 }
