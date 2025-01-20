@@ -19,6 +19,7 @@ type MagicApp struct {
 	ConfName       string              // 配置文件名
 	ConfHotLoading bool                // 配置启用热加载
 	IsDefault      bool                // 是否使用默认路由引擎
+	IsHeartbeat    bool                // 开启心跳检测, 默认关闭
 	RunMode        string              // 运行模式
 	RegRouteFun    func(r *gin.Engine) // 路由注册
 	ExitAfter      func()              // 程序结束后的操作
@@ -35,7 +36,9 @@ func (m *MagicApp) Init() {
 	// 初始化日志
 	m.initLog()
 	// 心跳检测
-	m.testRoute()
+	if m.IsHeartbeat {
+		m.testRoute()
+	}
 	// 路由注册
 	if m.RegRouteFun != nil {
 		m.RegRouteFun(m.Router)
