@@ -83,6 +83,9 @@ func (m *MagicApp) Run() {
 
 // initRouter 初始化路由引擎
 func (m *MagicApp) initRouter() {
+	if m.Router != nil {
+		return
+	}
 	if m.RunMode == "" {
 		m.RunMode = "release"
 	}
