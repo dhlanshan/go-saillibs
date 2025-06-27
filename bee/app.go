@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-// MagicApp 魔术师
+// MagicApp 魔术
 type MagicApp struct {
 	Addr           string              // 运行地址端口
 	ConfPath       string              // 配置文件路径
