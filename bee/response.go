@@ -30,13 +30,13 @@ func response(c *gin.Context, respType responseTypeEnum, code int, msg string, d
 		c.String(http.StatusOK, data.(string))
 	case JsonEnum:
 		res := result{code, msg, data}
-		c.JSON(code, res)
+		c.JSON(http.StatusOK, res)
 	case AsciiJsonEnum:
 		res := result{code, msg, data}
-		c.AsciiJSON(code, res)
+		c.AsciiJSON(http.StatusOK, res)
 	case XmlEnum:
 		res := result{code, msg, data}
-		c.XML(code, res)
+		c.XML(http.StatusOK, res)
 	case RedirectEnum:
 		c.Redirect(http.StatusFound, data.(string))
 	}
