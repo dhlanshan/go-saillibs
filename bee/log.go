@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -24,6 +25,7 @@ type logConfig struct {
 	MaxBackups    int    `mapstructure:"maxBackups"`    // 保留历史文件的最大个数
 	MaxAge        int    `mapstructure:"maxAge"`        // 保留天数
 	IsJsonEncoder bool   `mapstructure:"isJsonEncoder"` // 是否使用JSON编码器
+	Level         string `mapstructure:"level"`         // 日志级别: debug/info/warn/error
 }
 
 // setDefault 设置默认值
@@ -43,6 +45,9 @@ func (l *logConfig) setDefault() {
 	if l.MaxAge == 0 {
 		l.MaxAge = 7
 	}
+	if l.Level == "" {
+		l.Level = "info"
+	}
 }
 
 // MagicLog 日志
@@ -61,8 +66,30 @@ func (m *MagicLog) initLogger() {
 	m.cfg = &config
 
 	// 创建核心日志组件
-	core := zapcore.NewCore(m.getEncoder(), zapcore.NewMultiWriteSyncer(m.getWriteSyncer(), zapcore.AddSync(os.Stdout)), zapcore.InfoLevel)
+	core := zapcore.NewCore(
+		m.getEncoder(),
+		zapcore.NewMultiWriteSyncer(m.getWriteSyncer(), zapcore.AddSync(os.Stdout)),
+		m.getLevel(),
+	)
 	Logger = zap.New(core, zap.AddStacktrace(zapcore.ErrorLevel)).Sugar()
+}
+
+func (m *MagicLog) getLevel() zapcore.Level {
+	if m == nil || m.cfg == nil {
+		return zapcore.InfoLevel
+	}
+	switch strings.ToLower(strings.TrimSpace(m.cfg.Level)) {
+	case "debug":
+		return zapcore.DebugLevel
+	case "info":
+		return zapcore.InfoLevel
+	case "warn", "warning":
+		return zapcore.WarnLevel
+	case "error":
+		return zapcore.ErrorLevel
+	default:
+		return zapcore.InfoLevel
+	}
 }
 
 // getEncoder 获取编码器
@@ -85,6 +112,11 @@ func (m *MagicLog) getEncoder() zapcore.Encoder {
 
 // getWriteSyncer 写入日志配置
 func (m *MagicLog) getWriteSyncer() zapcore.WriteSyncer {
+	// 目录不存在时自动创建，避免 lumberjack 写入失败
+	if err := os.MkdirAll(m.cfg.FilePath, 0o755); err != nil {
+		panic(fmt.Errorf("创建日志目录失败: %w", err))
+	}
+
 	// 设置日志存放目录及名称
 	stSeparator := string(filepath.Separator)
 	logFile := fmt.Sprintf("%s%s%s_%s.log", m.cfg.FilePath, stSeparator, m.cfg.FileName, time.Now().Format(time.DateOnly))
